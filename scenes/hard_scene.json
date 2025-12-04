@@ -1,0 +1,44 @@
+{
+  "robot": {
+    "L1": 0.35,
+    "L2": 0.25,
+    "joint_limits": {
+      "q1": [-3.14, 3.14],
+      "q2": [-2.2, 2.2],
+      "q3": [0.0, 0.25],
+      "q4": [-3.14, 3.14]
+    }
+  },
+  "obstacles": [
+    {
+      "type": "polygon",
+      "points": [
+        [0.50, 0.12],
+        [0.68, 0.12],
+        [0.68, 0.24],
+        [0.50, 0.24]
+      ]
+    },
+    {
+      "type": "polygon",
+      "points": [
+        [0.34, -0.22],
+        [0.60, -0.22],
+        [0.60, -0.12],
+        [0.34, -0.12]
+      ]
+    }
+  ],
+  "targets": [
+    { "x": 0.16, "y": 0.34, "label": "Target A" },
+    { "x": 0.62, "y": 0.32, "label": "Target B" },
+    { "x": 0.52, "y": -0.36, "label": "Target C" },
+    { "x": 0.20, "y": -0.36, "label": "Target D" }
+  ],
+  "missions": [
+    { "id": "Mission 1", "pickup_target": "Target A", "delivery_target": "Target B", "status": "pending" },
+    { "id": "Mission 2", "pickup_target": "Target B", "delivery_target": "Target C", "status": "pending" },
+    { "id": "Mission 3", "pickup_target": "Target C", "delivery_target": "Target D", "status": "pending" },
+    { "id": "Mission 4", "pickup_target": "Target D", "delivery_target": "Target A", "status": "pending" }
+  ]
+}
