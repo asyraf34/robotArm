@@ -12,7 +12,7 @@
   "obstacles": [],
   "targets": [
     { "x": 0.30, "y": 0.10, "label": "A" },
-    { "x": 0.46, "y": 0.18, "label": "B" },
+    { "x": 0.36, "y": 0.14, "label": "B" },
     { "x": 0.38, "y": -0.20, "label": "C" }
   ],
   "missions": [

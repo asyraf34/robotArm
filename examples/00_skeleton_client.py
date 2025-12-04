@@ -9,7 +9,7 @@ from client_tools import RobotController
 
 def main():
     with RobotController() as robot:
-        robot.load_scene("scenes/problem1.json")
+        robot.load_scene("scenes/problem3.json")
         robot.start_mission("Mission 1")
         robot.move_to([0.40, 0.10])
         robot.move_to([0.22, -0.30])
