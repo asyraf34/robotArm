@@ -3,6 +3,7 @@ Scene loading and saving (JSON format).
 """
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 import json
 
@@ -54,7 +55,33 @@ def load_scene(path: str) -> Scene:
     Scene
         Loaded scene.
     """
-    with open(path, "r") as f:
+    # Resolve the scene path. When the simulator is executed from a directory
+    # other than the repository root (for example, when launched from a
+    # packaged install), relative paths like ``scenes/problem1.json`` may not
+    # resolve correctly. To make the behaviour robust, we try multiple
+    # locations:
+    #   1) The path as provided (absolute or relative to cwd).
+    #   2) Relative to the project root (two levels above this file).
+    #   3) Inside a ``scenes`` directory under the project root.
+    scene_path = Path(path)
+    if not scene_path.exists():
+        project_root = Path(__file__).resolve().parents[2]
+
+        candidates = [project_root / scene_path]
+
+        # If the provided path is not already prefixed with "scenes", also
+        # consider a direct lookup under the scenes directory.
+        if scene_path.parts[0] != "scenes":
+            candidates.append(project_root / "scenes" / scene_path.name)
+
+        for candidate in candidates:
+            if candidate.exists():
+                scene_path = candidate
+                break
+        else:
+            raise FileNotFoundError(f"Scene file not found: {path}")
+
+    with open(scene_path, "r") as f:
         data = json.load(f)
     return Scene.from_dict(data)
 
