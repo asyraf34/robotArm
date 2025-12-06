@@ -110,8 +110,10 @@ def _problem3_plan(targets: Dict[str, Tuple[float, float]]):
             "Mission 4",
             [
                 targets["D"],
+                # Move around the obstacle from the right side to avoid collision
                 (0.24, -0.18),
-                (0.24, 0.26),
+                (0.40, -0.18),
+                (0.40, 0.26),
                 targets["A"],
             ],
         ),
