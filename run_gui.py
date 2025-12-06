@@ -193,6 +193,19 @@ def main(argv=None):
     """Main entry point for GUI application."""
     # Get scene path from command line
     args = _parse_args(argv if argv is not None else sys.argv[1:])
+
+    if args.solve:
+        if not args.scene:
+            print("Error: --solve requires a scene file path.")
+            return 1
+
+        scene_path = args.scene
+        if not Path(scene_path).exists():
+            print(f"Scene file not found: {scene_path}")
+            return 1
+
+        return _solve_scene(scene_path)
+
     scene_path = None
     if args.scene:
         scene_path = args.scene
