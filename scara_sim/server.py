@@ -1151,18 +1151,19 @@ class SimulatorServer:
         self.running = False
 
         # Close client socket first
-        if self.client_socket:
+        client_socket = self.client_socket
+        self.client_socket = None
+        if client_socket:
             try:
                 # Shutdown socket communication
-                self.client_socket.shutdown(socket.SHUT_RDWR)
+                client_socket.shutdown(socket.SHUT_RDWR)
             except (OSError, socket.error):
                 # Socket may already be closed
                 pass
             try:
-                self.client_socket.close()
+                client_socket.close()
             except (OSError, socket.error):
                 pass
-            self.client_socket = None
 
         # Close server socket
         if self.server_socket:

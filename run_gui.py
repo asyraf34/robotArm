@@ -5,6 +5,10 @@ Launch the SCARA simulator GUI application.
 Usage:
     python run_gui.py [scene_file.json]
 
+Optional solver flags:
+    --solve                 Run the autonomous solver (GUI shown by default)
+    --headless              Run the solver without displaying the GUI
+
 Example:
     python run_gui.py
     python run_gui.py scenes/demo.json
@@ -140,7 +144,7 @@ def _load_plan_for_scene(scene_path: str):
         print(f"Solver not implemented for scene: {scene_name}")
         return None, None
 
-        return plan, scene
+    return plan, scene
 
 def _run_plan(plan, scene, scene_path: str) -> int:
     """Run a mission plan against a simulator server."""
@@ -285,7 +289,12 @@ def _parse_args(argv: Iterable[str]):
     parser.add_argument(
         "--show-gui",
         action="store_true",
-        help="Display the GUI while the solver runs (requires --solve)",
+        help="(Deprecated) Display the GUI while the solver runs; now enabled by default.",
+    )
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Run the solver without showing the GUI (overrides --show-gui)",
     )
     return parser.parse_args(argv)
 
@@ -305,9 +314,11 @@ def main(argv=None):
             print(f"Scene file not found: {scene_path}")
             return 1
 
-        if args.show_gui:
+        # Show the GUI by default when solving; allow opting out with --headless
+        show_gui = not args.headless or args.show_gui
+        if show_gui:
             return _solve_scene_with_gui(scene_path)
-        
+
         return _solve_scene(scene_path)
 
     scene_path = None
