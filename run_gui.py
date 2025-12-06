@@ -41,7 +41,8 @@ def _problem1_plan(targets: Dict[str, Tuple[float, float]]):
             "Mission 1",
             [
                 targets["A"],
-                (0.24, 0.20),  # skirt left of the central obstacle
+                (0.24, -0.26),  # slip underneath the central obstacle
+                (0.52, -0.26),
                 targets["B"],
             ],
         ),
