@@ -120,13 +120,13 @@ def _problem3_plan(targets: Dict[str, Tuple[float, float]]):
     ]
 
 
-def _solve_scene(scene_path: str) -> int:
-    """Run the autonomous solver for supported problem scenes."""
+def _load_plan_for_scene(scene_path: str):
+    """Return the mission plan and scene data for a supported scene."""
 
     scene = load_scene(scene_path)
     if scene is None:
         print(f"Failed to load scene: {scene_path}")
-        return 1
+        return None, None
 
     target_map = _build_target_map(scene)
     scene_name = Path(scene_path).name
@@ -138,7 +138,12 @@ def _solve_scene(scene_path: str) -> int:
         plan = _problem3_plan(target_map)
     else:
         print(f"Solver not implemented for scene: {scene_name}")
-        return 1
+        return None, None
+
+        return plan, scene
+
+def _run_plan(plan, scene, scene_path: str) -> int:
+    """Run a mission plan against a simulator server."""
 
     robot = ScaraRobot(
         L1=scene.robot_config["L1"],
@@ -185,10 +190,103 @@ def _solve_scene(scene_path: str) -> int:
     return 0
 
 
+
+def _solve_scene(scene_path: str) -> int:
+    """Run the autonomous solver for supported problem scenes (headless)."""
+
+    plan, scene = _load_plan_for_scene(scene_path)
+    if plan is None or scene is None:
+        return 1
+
+    return _run_plan(plan, scene, scene_path)
+
+
+def _solve_scene_with_gui(scene_path: str) -> int:
+    """Run the solver while displaying the GUI for visual feedback."""
+
+    plan, scene = _load_plan_for_scene(scene_path)
+    if plan is None or scene is None:
+        return 1
+
+    result = {"code": 0}
+
+    root = tk.Tk()
+
+    try:
+        app = SimulatorGUI(root, scene_path)
+
+        def start_solver():
+            controller = RobotController(verbose=True)
+
+            # Wait for the GUI-managed server to come online
+            for _ in range(10):
+                if controller.connect():
+                    break
+                time.sleep(0.5)
+            else:
+                print("Failed to connect to simulator server started by GUI.")
+                result["code"] = 1
+                root.after(0, root.quit)
+                return
+
+            try:
+                if not controller.load_scene(scene_path):
+                    result["code"] = 1
+                    return
+
+                for mission_id, waypoints in plan:
+                    print(f"Starting {mission_id}")
+                    if not controller.start_mission(mission_id):
+                        result["code"] = 1
+                        return
+
+                    for xy in waypoints:
+                        if not controller.move_to(list(xy), elbow="up"):
+                            result["code"] = 1
+                            return
+
+                    if not controller.complete_mission(mission_id):
+                        result["code"] = 1
+                        return
+
+                controller.reset()
+                print("Solver finished all missions successfully.")
+            finally:
+                try:
+                    controller.disconnect()
+                except Exception:
+                    pass
+
+            # Close the GUI once the solver is done
+            root.after(500, root.quit)
+
+        # Start solver shortly after GUI is ready (server auto-starts inside GUI)
+        root.after(1000, start_solver)
+        root.mainloop()
+    except Exception:
+        import traceback
+
+        print("Error starting GUI while solving:")
+        print(traceback.format_exc())
+        result["code"] = 1
+    finally:
+        # Ensure GUI resources are cleaned up on exit
+        try:
+            root.destroy()
+        except Exception:
+            pass
+
+    return result["code"]
+
 def _parse_args(argv: Iterable[str]):
     parser = argparse.ArgumentParser(description="SCARA simulator GUI and solver")
     parser.add_argument("scene", nargs="?", help="Path to a scene JSON file")
-    parser.add_argument("--solve", action="store_true", help="Run the autonomous solver and exit")
+    parser.add_argument("--solve", action="store_true", help="Run the autonomous solver")
+    parser.add_argument(
+        "--show-gui",
+        action="store_true",
+        help="Display the GUI while the solver runs (requires --solve)",
+    )
     return parser.parse_args(argv)
 
 
@@ -207,6 +305,9 @@ def main(argv=None):
             print(f"Scene file not found: {scene_path}")
             return 1
 
+        if args.show_gui:
+            return _solve_scene_with_gui(scene_path)
+        
         return _solve_scene(scene_path)
 
     scene_path = None
