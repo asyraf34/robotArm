@@ -336,15 +336,23 @@ class RobotController:
         # Handle queued response
         if response and response.get("status") == "queued":
             command_id = response.get("command_id")
-            cmd_status = self.client.wait_for_command(command_id, timeout=10.0)
+            # Loading a scene can occasionally take longer than other
+            # commands (especially on first launch), so give it more time
+            # before declaring a timeout.
+            cmd_status = self.client.wait_for_command(command_id, timeout=30.0)
             if cmd_status and cmd_status.get("status") == "completed":
                 final_response = cmd_status.get("response", {})
                 if final_response.get("status") == "ok":
                     if self.verbose:
                         print(f"[OK] Loaded scene: {scene_path}")
                     return True
-            if self.verbose:
-                print(f"[FAIL] Failed to load scene {scene_path}")
+                elif self.verbose:
+                    error = final_response.get("message", "Unknown error")
+                    print(f"[FAIL] Failed to load scene {scene_path}: {error}")
+            else:
+                # Provide a clearer message when the server never replies.
+                if self.verbose:
+                    print(f"[FAIL] Failed to load scene {scene_path}: command timed out")
             return False
 
         # Handle direct ok response
