@@ -355,6 +355,14 @@ class SimulatorServer:
 
                                 # Create command entry and enqueue
                                 command_entry = CommandEntry(command_id, command)
+
+                                # Store immediately so status queries work even while the
+                                # command is still in the queue or executing. Without this,
+                                # clients may poll for status and receive "not found" until
+                                # the command finishes, which can lead to perceived
+                                # timeouts when GUI callbacks take time to process.
+                                with self.command_lock:
+                                    self.command_history[command_id] = command_entry
                                 self.command_queue.put(command_entry)
 
                                 # Return immediate response indicating command was queued
