@@ -290,13 +290,19 @@ class SimulatorClient:
             if not status_resp:
                 return None
 
-            if status_resp.get("status") == "ok":
-                cmd_status = status_resp.get("command_status", {})
-                cmd_state = cmd_status.get("status", "unknown")
+            # Surface errors immediately so callers don't get a misleading timeout.
+            if status_resp.get("status") != "ok":
+                return {
+                    "status": "error",
+                    "message": status_resp.get("message", "Unknown error while checking command status"),
+                }
 
-                # Check if command is complete or errored
-                if cmd_state in ("completed", "error"):
-                    return cmd_status
+            cmd_status = status_resp.get("command_status", {})
+            cmd_state = cmd_status.get("status", "unknown")
+
+            # Check if command is complete or errored
+            if cmd_state in ("completed", "error"):
+                return cmd_status
 
             # Sleep before next poll (10ms default for responsive command completion)
             time.sleep(poll_interval)

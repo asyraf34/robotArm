@@ -340,19 +340,36 @@ class RobotController:
             # commands (especially on first launch), so give it more time
             # before declaring a timeout.
             cmd_status = self.client.wait_for_command(command_id, timeout=30.0)
-            if cmd_status and cmd_status.get("status") == "completed":
+            if cmd_status is None:
+                if self.verbose:
+                    print(f"[FAIL] Failed to load scene {scene_path}: command timed out")
+                return False
+
+            if cmd_status.get("status") == "error":
+                if self.verbose:
+                    print(
+                        f"[FAIL] Failed to load scene {scene_path}: "
+                        f"{cmd_status.get('message', 'Unknown error')}"
+                    )
+                return False
+
+            if cmd_status.get("status") == "completed":
                 final_response = cmd_status.get("response", {})
                 if final_response.get("status") == "ok":
                     if self.verbose:
                         print(f"[OK] Loaded scene: {scene_path}")
                     return True
-                elif self.verbose:
+
+                if self.verbose:
                     error = final_response.get("message", "Unknown error")
                     print(f"[FAIL] Failed to load scene {scene_path}: {error}")
             else:
-                # Provide a clearer message when the server never replies.
+
                 if self.verbose:
-                    print(f"[FAIL] Failed to load scene {scene_path}: command timed out")
+                    print(
+                        f"[FAIL] Failed to load scene {scene_path}: "
+                        f"unexpected command status {cmd_status.get('status', 'unknown')}"
+                    )
             return False
 
         # Handle direct ok response
